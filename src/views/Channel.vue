@@ -9,32 +9,41 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
-import tmi from 'tmi.js'
+import tmi, { Client } from 'tmi.js'
 export default defineComponent({
   name: 'Channel',
   created: function () {
-    const client = new tmi.Client({
-      channels: [channel]
+    this.client = new tmi.Client({
+      channels: [this.channel]
     })
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    client.connect().catch((err: any) => {
+    this.client.connect().then(() => {
+      console.log('connected')
+    }).catch((err: unknown) => {
       console.error(err)
     })
 
-    client.on('message', (channel, tags, message, self) => {
-      this.messages.push(message)
-      console.log(message)
+    this.client.on('message', (channel, tags, message, self) => {
+      this.addMessage(message)
     })
   },
   computed: {
-    channel: function () {
-      return this.$route.params.channel
+    channel: function (): string {
+      const channelParam = this.$route.params.channel
+      return Array.isArray(channelParam) ? channelParam[0] : channelParam
     }
   },
   data: function () {
     return {
-      messages: [] as string[]
+      messages: [] as string[],
+      client: undefined as undefined | Client
+    }
+  },
+  methods: {
+    addMessage: function (message: string) {
+      this.messages.push(message)
+      if (this.messages.length > 10) this.messages.shift()
     }
   }
 })
