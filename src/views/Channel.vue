@@ -1,8 +1,10 @@
 <template>
   <div class="home">
     {{ channel }}
+    Counter: {{ counter }}
+    Strict Counter: {{ strictCounter }}
     <div v-for="(message, index) of messages" :key="index">
-      {{ message }}
+      <div :class="{ valid: isValid(message), strictValid: isStrictValid(message) }">{{ message }}</div>
     </div>
   </div>
 </template>
@@ -17,7 +19,6 @@ export default defineComponent({
       channels: [this.channel]
     })
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     this.client.connect().then(() => {
       console.log('connected')
     }).catch((err: unknown) => {
@@ -37,14 +38,42 @@ export default defineComponent({
   data: function () {
     return {
       messages: [] as string[],
-      client: undefined as undefined | Client
+      client: undefined as undefined | Client,
+      strictCounter: 0,
+      counter: 0
     }
   },
   methods: {
     addMessage: function (message: string) {
       this.messages.push(message)
       if (this.messages.length > 10) this.messages.shift()
+
+      if (this.isValid(message)) {
+        const messageValue = Number(message)
+        this.counter += messageValue
+      }
+
+      if (this.isStrictValid(message)) {
+        const messageValue = Number(message)
+        this.strictCounter += messageValue
+      }
+    },
+    isValid: function (message: string) {
+      return /^(\+|-)[0-9]*$/.test(message)
+    },
+    isStrictValid: function (message: string) {
+      return /^(\+|-)2$/.test(message)
     }
   }
 })
 </script>
+
+<style scoped>
+  .valid {
+    color: green;
+  }
+
+  .strictValid {
+    color: gold;
+  }
+</style>
